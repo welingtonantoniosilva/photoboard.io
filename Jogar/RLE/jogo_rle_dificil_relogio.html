@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photo Board - Jogo RLE</title>
+<link rel="icon" type="image/png" href="imagem/icon.png">
+
+<!-- CDN para a fonte digital DS-Digital -->
+<link href="https://fonts.cdnfonts.com/css/ds-digital" rel="stylesheet">
+
+<style>
+    * { box-sizing: border-box; }
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 15px;
+        background-color: #1a1a24;
+        font-family: Arial, sans-serif;
+        color: #ffffff;
+    }
+    h1 { color: #333; margin-bottom: 15px; font-size: 20px; text-align: center; }
+    .container-principal {
+        display: flex;
+        flex-direction: row;
+        gap: 25px;
+        align-items: flex-start;
+        justify-content: center;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 920px;
+    }
+    .zona-jogo {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        flex: 1;
+    }
+    .tabuleiro {
+        display: grid;
+        grid-template-columns: repeat(18, minmax(8px, 16px));
+        grid-template-rows: repeat(18, minmax(8px, 16px));
+        gap: 2px;
+        background-color: #666;
+        padding: 4px;
+        border-radius: 6px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        max-width: 100%;
+    }
+    .casa {
+        background-color: rgb(160, 160, 160);
+        border-radius: 2px;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+        aspect-ratio: 1 / 1;
+    }
+    .casa:hover { opacity: 0.8; }
+    .cinza { background-color: rgb(160, 160, 160) !important; }
+    .branco { background-color: #FFFFFF !important; }
+    .preto { background-color: #000000 !important; }
+    .vermelho { background-color: #9C1F06 !important; }
+
+    /* Painel Lateral que agrupa Enigma + Relógio Digital */
+    .painel-lateral {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 220px;
+    }
+
+    .painel-enigma {
+        width: 100%;
+        background-color: #1e1e1e;
+        color: #00ff00;
+        padding: 12px;
+        border-radius: 8px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 11px;
+        line-height: 1.35;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        word-break: break-all;
+        border: 1px solid #33334d;
+        /* Removidos max-height e overflow-y para evitar a barra de rolagem */
+    }
+    .painel-enigma h3 {
+        color: #fff;
+        margin-top: 0;
+        border-bottom: 1px solid #444;
+        padding-bottom: 5px;
+        font-size: 13px;
+        text-align: center;
+    }
+
+    /* Relógio Digital */
+    .painel-relogio {
+        background-color: #000000;
+        border: 2px solid #33334d;
+        border-radius: 8px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: inset 0 0 8px rgba(0,255,0,0.15), 0 4px 10px rgba(0,0,0,0.5);
+    }
+    .relogio-titulo {
+        color: #8888aa;
+        font-size: 9px;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+    .relogio-display {
+        font-family: 'DS-Digital', 'Courier New', monospace;
+        font-size: 28px;
+        color: #00ff00;
+        text-shadow: 0 0 8px rgba(0, 255, 0, 0.7);
+        letter-spacing: 2px;
+        line-height: 1;
+    }
+
+    .controles {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
+        width: 100%;
+    }
+    button {
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: bold;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: background-color 0.2s, transform 0.1s;
+        flex: 1;
+        min-width: 110px;
+        text-align: center;
+    }
+    button:active:not(:disabled) { transform: scale(0.97); }
+    button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+    .btn-comparar { background-color: #007bff; }
+    .btn-comparar:hover:not(:disabled) { background-color: #0056b3; }
+    .btn-revelar { background-color: #ff9500; }
+    .btn-revelar:hover:not(:disabled) { background-color: #e08200; }
+    .btn-reiniciar { background-color: #28a745; }
+    .btn-reiniciar:hover { background-color: #218838; }
+    .btn-back {
+        background-color: #dc3545;
+        width: 100%;
+    }
+    .btn-back:hover { background-color: #c82333; }
+
+    .resultado-mensagem {
+        margin-top: 12px;
+        font-weight: bold;
+        font-size: 14px;
+        color: #333;
+        text-align: center;
+        min-height: 20px;
+    }
+
+    /* Modal de Exit & Ranking */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 15px;
+    }
+    .modal-overlay.ativo {
+        display: flex;
+    }
+    .modal-conteudo {
+        background-color: #1e1e2d;
+        border: 1px solid #3d3d5c;
+        border-radius: 12px;
+        padding: 24px;
+        width: 100%;
+        max-width: 580px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        animation: modalFadeIn 0.25s ease-out;
+    }
+    @keyframes modalFadeIn {
+        from { opacity: 0; transform: translateY(-15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-header h2 {
+        margin: 0;
+        font-size: 20px;
+        color: #00ff00;
+        text-align: center;
+    }
+    .modal-header p {
+        margin: 6px 0 0 0;
+        font-size: 12px;
+        color: #aaaabb;
+        text-align: center;
+    }
+    .tabela-ranking-container {
+        max-height: 250px;
+        overflow-y: auto;
+        border: 1px solid #33334d;
+        border-radius: 8px;
+    }
+    .tabela-ranking {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        text-align: center;
+    }
+    .tabela-ranking th {
+        background-color: #2a2a3d;
+        color: #00ff00;
+        padding: 10px;
+        position: sticky;
+        top: 0;
+        border-bottom: 1px solid #33334d;
+    }
+    .tabela-ranking td {
+        padding: 10px;
+        border-bottom: 1px solid #28283d;
+    }
+    .tabela-ranking tr:nth-child(even) {
+        background-color: #181824;
+    }
+    .tabela-ranking tr:hover {
+        background-color: #25253b;
+    }
+    .modal-acoes {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+    .btn-modal-fechar {
+        background-color: #4a4a6a;
+    }
+    .btn-modal-fechar:hover {
+        background-color: #3b3b54;
+    }
+    .btn-modal-sair {
+        background-color: #dc3545;
+    }
+    .btn-modal-sair:hover {
+        background-color: #bd2130;
+    }
+
+    @media (max-width: 768px) {
+        body { justify-content: flex-start; }
+        .container-principal {
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 15px;
+        }
+        .painel-lateral { width: 100%; flex-direction: row; justify-content: space-between; }
+        .painel-enigma { width: 60%; }
+        .painel-relogio { width: 35%; }
+        .tabuleiro {
+            grid-template-columns: repeat(18, minmax(6px, 14px));
+            grid-template-rows: repeat(18, minmax(6px, 14px));
+            gap: 1px;
+        }
+    }
+</style>
+</head>
+<body>
+
+<div class="container-principal">
+    <div class="zona-jogo">
+        <div class="tabuleiro" id="tabuleiro"></div>
+        <div class="controles">
+            <button class="btn-reiniciar" onclick="novoJogo()">Novo Jogo</button>
+            <button class="btn-comparar" id="btnValidar" onclick="compararMatrizes()">Validar Resposta</button>
+            <button class="btn-revelar" id="btnRevelar" onclick="revelarSegredo()">Revelar Enigma</button>
+            <button class="btn-back" onclick="abrirModalExit()">Exit</button>
+        </div>
+        <div class="resultado-mensagem" id="mensagemFeedback"></div>
+    </div>
+
+    <div class="painel-lateral">
+        <div class="painel-enigma">
+            <h3>Enigma</h3>
+            <div id="conteudoEnigma">Gerando Enigma...<br></div>
+        </div>
+        
+        <div class="painel-relogio">
+            <div class="relogio-titulo">Tempo</div>
+            <div class="relogio-display" id="relogioDisplay">00:00</div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Exit & Ranking -->
+<div class="modal-overlay" id="modalExit">
+    <div class="modal-conteudo">
+        <div class="modal-header">
+            <h2>🏆 Histórico de Tentativas</h2>
+            <p>Resultado das suas partidas finalizadas em ordem cronológica de tentativa</p>
+        </div>
+        
+        <div class="tabela-ranking-container">
+            <table class="tabela-ranking">
+                <thead>
+                    <tr>
+                        <th>Tentativa</th>
+                        <th>Acertos</th>
+                        <th>Porcentagem</th>
+                        <th>Tempo Gasto</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoRanking">
+                    <!-- Gerado dinamicamente via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="modal-acoes">
+            <button class="btn-modal-fechar" onclick="fecharModalExit()">Voltar ao Jogo</button>
+            <button class="btn-modal-sair" onclick="confirmarSaida()">Sair da Página</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const tabuleiro = document.getElementById('tabuleiro');
+    const mensagemFeedback = document.getElementById('mensagemFeedback');
+    const btnValidar = document.getElementById('btnValidar');
+    const btnRevelar = document.getElementById('btnRevelar');
+    const relogioDisplay = document.getElementById('relogioDisplay');
+    const modalExit = document.getElementById('modalExit');
+    const corpoRanking = document.getElementById('corpoRanking');
+
+    const TAMANHO = 18; 
+    const TOTAL_CASAS = TAMANHO * TAMANHO; // 324 casas
+    
+    let matrizUsuario = [];
+    let matrizSecreta = [];
+
+    // Estado do Relógio
+    let tempoSegundos = 0;
+    let timerInterval = null;
+    let relogioRodando = false;
+
+    // Histórico para Ranking
+    let historicoTentativas = [];
+    let tentativaAtual = null;
+    let contadorTentativas = 0;
+
+    novoJogo();
+
+    function novoJogo() {
+        pararRelogio();
+
+        contadorTentativas++;
+        tentativaAtual = {
+            id: contadorTentativas,
+            tempoSegundos: 0,
+            acertos: 0,
+            porcentagem: "0.0",
+            validado: false,
+            revelado: false,
+            tempoFormatado: "00:00"
+        };
+
+        mensagemFeedback.textContent = '';
+        btnValidar.disabled = false;
+        btnRevelar.disabled = false;
+
+        gerarMatrizSecreta();
+        inicializarTabuleiro();
+        iniciarRelogio();
+    }
+
+    function iniciarRelogio() {
+        pararRelogio();
+        tempoSegundos = 0;
+        atualizarDisplayRelogio();
+        relogioRodando = true;
+
+        timerInterval = setInterval(() => {
+            tempoSegundos++;
+            if (tentativaAtual) {
+                tentativaAtual.tempoSegundos = tempoSegundos;
+            }
+            atualizarDisplayRelogio();
+        }, 1000);
+    }
+
+    function pararRelogio() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        relogioRodando = false;
+    }
+
+    function atualizarDisplayRelogio() {
+        const minutos = String(Math.floor(tempoSegundos / 60)).padStart(2, '0');
+        const segundos = String(tempoSegundos % 60).padStart(2, '0');
+        const formatado = `${minutos}:${segundos}`;
+        relogioDisplay.textContent = formatado;
+        if (tentativaAtual) {
+            tentativaAtual.tempoFormatado = formatado;
+        }
+    }
+
+    function gerarMatrizSecreta() {
+        matrizSecreta = [];
+        let visualEnigma = "";
+
+        for (let l = 0; l < TAMANHO; l++) {
+            let linha = [];
+            
+            for (let c = 0; c < TAMANHO; c++) {
+                let valor = Math.random() < 0.4;
+                linha.push(valor);
+            }
+            matrizSecreta.push(linha);
+
+            let valoresRle = [];
+            let contarBranco = true; // Sempre inicia a lógica contando os brancos
+            let contador = 0;
+
+            for (let c = 0; c < TAMANHO; c++) {
+                let ehPreto = linha[c]; 
+
+                if (contarBranco) {
+                    if (!ehPreto) {
+                        contador++; // Acumula casas brancas
+                    } else {
+                        valoresRle.push(contador);
+                        contador = 1; // Inicia a contagem deste primeiro bloco preto encontrado
+                        contarBranco = false; // Alterna a lógica para contar pretos
+                    }
+                } else {
+                    if (ehPreto) {
+                        contador++; // Acumula casas pretas
+                    } else {
+                        valoresRle.push(contador);
+                        contador = 1; // Inicia a contagem deste bloco branco
+                        contarBranco = true; // Alterna a lógica de volta para contar brancos
+                    }
+                }
+            }
+            valoresRle.push(contador);
+            // Enigma formatado sem vírgulas (separado por espaços)
+            visualEnigma += valoresRle.join(" ") + "<br>";
+        }
+        
+        document.getElementById('conteudoEnigma').innerHTML = visualEnigma;
+    }
+
+    function inicializarTabuleiro() {
+        tabuleiro.innerHTML = ''; 
+        matrizUsuario = []; 
+        for (let linha = 0; linha < TAMANHO; linha++) {
+            let linhaMatriz = [];
+            for (let coluna = 0; coluna < TAMANHO; coluna++) {
+                linhaMatriz.push(null); // Estado neutro inicial (cinza)
+                const casa = document.createElement('div');
+                casa.classList.add('casa', 'cinza');
+                casa.dataset.linha = linha;
+                casa.dataset.coluna = coluna;
+                casa.dataset.estado = 'cinza'; // Estado independente
+                casa.addEventListener('click', function() {
+                    alternarCor(this);
+                });
+                tabuleiro.appendChild(casa);
+            }
+            matrizUsuario.push(linhaMatriz);
+        }
+    }
+
+    function alternarCor(elemento) {
+        elemento.classList.remove('vermelho'); 
+
+        const l = parseInt(elemento.dataset.linha);
+        const c = parseInt(elemento.dataset.coluna);
+        const estadoAtual = elemento.dataset.estado;
+
+        if (estadoAtual === 'cinza') {
+            // 1º clique: Muda para BRANCO
+            elemento.classList.remove('cinza', 'preto');
+            elemento.classList.add('branco');
+            elemento.dataset.estado = 'branco';
+            matrizUsuario[l][c] = false; // Branco
+        } else if (estadoAtual === 'branco') {
+            // 2º clique: Muda para PRETO
+            elemento.classList.remove('branco');
+            elemento.classList.add('preto');
+            elemento.dataset.estado = 'preto';
+            matrizUsuario[l][c] = true; // Preto
+        } else if (estadoAtual === 'preto') {
+            // 3º clique: Volta para CINZA
+            elemento.classList.remove('preto', 'branco');
+            elemento.classList.add('cinza');
+            elemento.dataset.estado = 'cinza';
+            matrizUsuario[l][c] = null; // Reset para estado neutro
+        }
+    }
+
+    function compararMatrizes() {
+        pararRelogio();
+
+        let acertos = 0;
+        const casasVisuais = tabuleiro.children;
+        let index = 0;
+
+        for (let l = 0; l < TAMANHO; l++) {
+            for (let c = 0; c < TAMANHO; c++) {
+                const casa = casasVisuais[index];
+                
+                casa.classList.remove('vermelho');
+
+                const valorUsuario = matrizUsuario[l][c];
+                const valorSecreto = matrizSecreta[l][c];
+
+                if (valorUsuario === valorSecreto) {
+                    acertos++;
+                } else {
+                    casa.classList.add('vermelho');
+                }
+                index++;
+            }
+        }
+
+        const porcentagem = ((acertos / TOTAL_CASAS) * 100).toFixed(1);
+
+        if (tentativaAtual) {
+            tentativaAtual.acertos = acertos;
+            tentativaAtual.porcentagem = porcentagem;
+            tentativaAtual.validado = true;
+
+            const idx = historicoTentativas.findIndex(t => t.id === tentativaAtual.id);
+            if (idx >= 0) {
+                historicoTentativas[idx] = { ...tentativaAtual };
+            } else {
+                historicoTentativas.push({ ...tentativaAtual });
+            }
+        }
+
+        if (acertos === TOTAL_CASAS) {
+            mensagemFeedback.style.color = "#28a745";
+            mensagemFeedback.textContent = "🏆 Perfeito! Você desvendou o enigma por completo!";
+            btnValidar.disabled = true;
+        } else {
+            mensagemFeedback.style.color = "#007bff";
+            mensagemFeedback.textContent = `Progresso: ${porcentagem}% de correspondência (${acertos}/${TOTAL_CASAS} casas corretas).`;
+        }
+    }
+
+    function revelarSegredo() {
+        pararRelogio();
+
+        if (tentativaAtual) {
+            tentativaAtual.revelado = true;
+        }
+
+        const casasVisuais = tabuleiro.children;
+        let index = 0;
+        for (let l = 0; l < TAMANHO; l++) {
+            for (let c = 0; c < TAMANHO; c++) {
+                const casa = casasVisuais[index];
+                casa.classList.remove('cinza', 'preto', 'branco', 'vermelho');
+                
+                if (matrizSecreta[l][c]) {
+                    casa.classList.add('preto');
+                    casa.dataset.estado = 'preto';
+                    matrizUsuario[l][c] = true;
+                } else {
+                    casa.classList.add('branco');
+                    casa.dataset.estado = 'branco';
+                    matrizUsuario[l][c] = false;
+                }
+                index++;
+            }
+        }
+        mensagemFeedback.style.color = "#ff9500";
+        mensagemFeedback.textContent = "O Enigma foi revelado!";
+        btnValidar.disabled = true;
+    }
+
+    function abrirModalExit() {
+        renderizarRanking();
+        modalExit.classList.add('ativo');
+    }
+
+    function fecharModalExit() {
+        modalExit.classList.remove('ativo');
+    }
+
+    function renderizarRanking() {
+        corpoRanking.innerHTML = '';
+
+        const tentativasValidas = historicoTentativas.filter(t => t.validado && !t.revelado);
+
+        if (tentativasValidas.length === 0) {
+            corpoRanking.innerHTML = `
+                <tr>
+                    <td colspan="4" style="padding: 24px; color: #8888aa;">
+                        Nenhuma tentativa validada até o momento.<br>
+                        <small>(Tentativas em que o Enigma foi Revelado não contam para o histórico)</small>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        tentativasValidas.sort((a, b) => a.id - b.id);
+
+        tentativasValidas.forEach((item) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>Tentativa ${item.id}</strong></td>
+                <td>${item.acertos}/${TOTAL_CASAS}</td>
+                <td>${item.porcentagem}%</td>
+                <td>${item.tempoFormatado}</td>
+            `;
+            corpoRanking.appendChild(tr);
+        });
+    }
+
+    function confirmarSaida() {
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            location.reload();
+        }
+    }
+</script>
+</body>
+</html>
