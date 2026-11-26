@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuração do Jogo</title>
+    <link rel="icon" type="image/png" href="imagem/icon.png">
+    <style>
+        /* CSS Base idêntico ao instrucoes.html */
+        body {
+            background-color: #1a1a24;
+            color: #ffffff;
+            font-family: 'Segoe UI', sans-serif;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        .content-box {
+            background-color: #252536;
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        h2 {
+            color: #ffcc00;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            margin-top: 0;
+        }
+
+        p {
+            line-height: 1.6;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+
+        .btn-back {
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: #444466;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: 0.3s;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            max-width: 200px;
+            box-sizing: border-box;
+        }
+
+        .btn-back:hover {
+            background-color: #555588;
+        }
+
+        /* Grupo de Botões de Caminho (Dois por linha) */
+        .options-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .btn-choice {
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            background-color: #ffcc00;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .btn-choice:hover {
+            background-color: #e6b800;
+            transform: translateY(-2px);
+        }
+
+        /* Estrutura do Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 9999;
+        }
+
+        .modal-content {
+            background-color: #252536;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            border: 2px solid #ffcc00;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+
+        .modal-content h3 {
+            color: #ffcc00;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            margin-top: 0;
+        }
+
+        /* Botões de Dificuldade */
+        .difficulty-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn-diff {
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #000000;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-easy { background-color: #ffcc00; }
+        .btn-easy:hover { background-color: #6b5602; }
+
+        .btn-medium { background-color: #ffcc00; }
+        .btn-medium:hover { background-color: #6b5602; }
+
+        .btn-hard { background-color: #ffcc00; }
+        .btn-hard:hover { background-color: #6b5602; }
+        
+        .btn-extreme { background-color: #4a148c; }
+        .btn-extreme:hover { background-color: #380b61; }
+
+        @media (max-width: 480px) {
+            .options-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="content-box">
+        <h2>Escolha modalidade ...</h2>
+        <p>Selecione uma das opções abaixo para configurar a sua partida:</p>
+        
+        <div class="options-group">
+            <button class="btn-choice" onclick="mostrarModal('Binário')">Binário</button>
+            <button class="btn-choice" onclick="mostrarModal('Binário ⏰')">Binário ⏰</button>
+            <button class="btn-choice" onclick="mostrarModal('RLE')">RLE (Run-Length Encoding)</button>
+            <button class="btn-choice" onclick="mostrarModal('RLE ⏰')">RLE (Run-Length Encoding) ⏰</button>
+            <button class="btn-choice" onclick="mostrarModal('RGB')">RGB</button>
+            <button class="btn-choice" onclick="mostrarModal('RGB ⏰')">RGB ⏰</button>
+        </div>
+
+        <button class="btn-back" onclick="window.history.back()">Voltar ao Início</button>
+    </div>
+
+    <div class="modal-overlay" id="meuModal">
+        <div class="modal-content">
+            <h3 id="tituloModal">Dificuldade</h3>
+            
+            <div class="difficulty-group">
+                <button class="btn-diff btn-easy" onclick="escolherDificuldade('Fácil')">Fácil</button>
+                <button class="btn-diff btn-medium" onclick="escolherDificuldade('Médio')">Médio</button>
+                <button class="btn-diff btn-hard" onclick="escolherDificuldade('Difícil')">Difícil</button>
+            </div>
+
+            <button class="btn-back" onclick="fecharModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        var opcaoSelecionada = "";
+
+        // Objeto que gerencia as rotas baseado na Opção + Dificuldade
+        const rotasDeJogo = {
+            "Binário": {
+                "Fácil": "Jogar/Binario/jogo_binario_facil.html",
+                "Médio": "Jogar/Binario/jogo_binario_medio.html",
+                "Difícil": "Jogar/Binario/jogo_binario_dificil.html",
+            },
+            "Binário ⏰": {
+                "Fácil": "Jogar/Binario/photo_binario_facil_relogio.html",
+                "Médio": "Jogar/Binario/photo_binario_medio_relogio.html",
+                "Difícil": "Jogar/Binario/photo_binario_dificil_relogio.html",
+            },
+            "RLE": {
+                "Fácil": "Jogar/RLE/jogo_rle_facil.html",
+                "Médio": "Jogar/RLE/jogo_rle_medio.html",
+                "Difícil": "Jogar/RLE/jogo_rle_dificil.html",
+            },
+            "RLE ⏰": {
+                "Fácil": "Jogar/RLE/jogo_rle_facil_relogio.html",
+                "Médio": "Jogar/RLE/jogo_rle_medio_relogio.html",
+                "Difícil": "Jogar/RLE/jogo_rle_dificil_relogio.html",
+            },
+            "RGB": {
+                "Fácil": "Jogar/RGB/jogo_rgb_facil.html",
+                "Médio": "Jogar/RGB/jogo_rgb_medio.html",
+                "Difícil": "Jogar/RGB/jogo_rgb_dificil.html",
+            },
+            "RGB ⏰": {
+                "Fácil": "Jogar/RGB/jogo_rgb_facil_relogio.html",
+                "Médio": "Jogar/RGB/jogo_rgb_medio_relogio.html",
+                "Difícil": "Jogar/RGB/jogo_rgb_dificil_relogio.html",
+            },
+        };
+
+        function mostrarModal(nomeOpcao) {
+            opcaoSelecionada = nomeOpcao;
+            document.getElementById("tituloModal").innerText = nomeOpcao + ": Dificuldade";
+            document.getElementById("meuModal").style.display = "flex";
+        }
+
+        function fecharModal() {
+            document.getElementById("meuModal").style.display = "none";
+        }
+
+        function escolherDificuldade(nivel) {
+            fecharModal(); 
+            
+            // Verifica se a opção e o nível selecionados existem no objeto de rotas
+            if (rotasDeJogo[opcaoSelecionada] && rotasDeJogo[opcaoSelecionada][nivel]) {
+                let paginaDestino = rotasDeJogo[opcaoSelecionada][nivel];
+                            
+                // Redireciona o usuário para a página escolhida
+                window.location.href = paginaDestino; 
+            } else {
+                alert("Aviso: Caminho ou Dificuldade não configurados corretamente no sistema.");
+            }
+        }
+    </script>
+</body>
+</html>

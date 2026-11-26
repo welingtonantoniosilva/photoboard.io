@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photo Board</title>
+<link rel="icon" type="image/png" href="imagem/icon.png">
+
+<style>
+    * { 
+        box-sizing: border-box; 
+    }
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 15px;
+        background-color: #11111a;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #ffffff;
+    }
+    h1 { 
+        color: #f1f1f1; 
+        margin-top: 0;
+        margin-bottom: 15px; 
+        font-size: 24px; 
+        text-align: center; 
+        letter-spacing: 0.5px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+    }
+
+    .container-principal {
+        display: flex;
+        flex-direction: row;
+        gap: 24px;
+        align-items: flex-start;
+        justify-content: center;
+        background: #ffffff;
+        padding: 24px;
+        border-radius: 14px;
+        box-shadow: 0 12px 35px rgba(0,0,0,0.7);
+        width: 100%;
+        max-width: 950px;
+        border: 1px solid #2d2d44;
+    }
+    .zona-jogo {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        flex: 1;
+    }
+
+    .tabuleiro {
+        display: grid;
+        grid-template-columns: repeat(9, 45px);
+        grid-template-rows: repeat(9, 45px);
+        gap: 4px;
+        background-color: #27273a;
+        padding: 12px;
+        border-radius: 10px;
+        box-shadow: 0 8px 22px rgba(0,0,0,0.5);
+    }
+    .casa {
+        background-color: rgb(180, 180, 180);
+        border-radius: 4px;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.2s ease;
+        width: 45px;
+        height: 45px;
+        border: 2px solid transparent;
+        position: relative;
+    }
+    .casa:hover { 
+        transform: scale(1.08);
+        z-index: 1;
+    }
+    .casa.selecionada {
+        border-color: #00ff88 !important;
+        box-shadow: 0 0 14px #00ff88;
+        transform: scale(1.12);
+        z-index: 2;
+    }
+
+    .painel-form-rgb {
+        margin-top: 16px;
+        background-color: #141422;
+        border: 1px solid #33334d;
+        border-radius: 10px;
+        padding: 14px 16px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        box-shadow: inset 0 0 12px rgba(0,0,0,0.5);
+    }
+    .form-rgb-titulo {
+        font-size: 12px;
+        font-weight: bold;
+        color: #00ff88;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .status-selecao {
+        font-size: 11px;
+        color: #aaaabb;
+        font-weight: normal;
+    }
+    .form-rgb-inputs {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .input-group {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex: 1;
+        min-width: 65px;
+    }
+    .input-group label {
+        font-weight: bold;
+        font-size: 13px;
+    }
+    .label-r { color: #ff5555; }
+    .label-g { color: #55ff55; }
+    .label-b { color: #5588ff; }
+    
+    .input-rgb {
+        width: 100%;
+        background: #232338;
+        border: 1px solid #444466;
+        color: #ffffff;
+        border-radius: 6px;
+        padding: 7px;
+        font-size: 13px;
+        text-align: center;
+        font-weight: bold;
+    }
+    .input-rgb:focus {
+        outline: none;
+        border-color: #00ff88;
+        box-shadow: 0 0 6px rgba(0, 255, 136, 0.4);
+    }
+    .cor-preview {
+        width: 34px;
+        height: 34px;
+        border-radius: 6px;
+        border: 2px solid #555577;
+        background-color: rgb(255, 255, 255);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+        flex-shrink: 0;
+    }
+    .btn-aplicar-cor {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+    .btn-aplicar-cor:hover { background-color: #218838; }
+
+    .controles {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 16px;
+        width: 100%;
+    }
+    button.btn-acao {
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: bold;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+        transition: background-color 0.2s, transform 0.1s;
+        flex: 1;
+        min-width: 110px;
+        text-align: center;
+    }
+    button.btn-acao:active:not(:disabled) { transform: scale(0.97); }
+    button.btn-acao:disabled {
+        background-color: #3d3d52 !important;
+        color: #777799;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+    .btn-comparar { background-color: #007bff; }
+    .btn-comparar:hover:not(:disabled) { background-color: #0056b3; }
+    .btn-revelar { background-color: #ff9500; }
+    .btn-revelar:hover:not(:disabled) { background-color: #e08200; }
+    .btn-reiniciar { background-color: #17a2b8; }
+    .btn-reiniciar:hover { background-color: #138496; }
+    .btn-back { background-color: #dc3545; width: 100%; }
+    .btn-back:hover { background-color: #c82333; }
+
+    .resultado-mensagem {
+        margin-top: 12px;
+        font-weight: bold;
+        font-size: 13px;
+        color: #333333;
+        text-align: center;
+        min-height: 20px;
+    }
+
+    .painel-lateral {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 230px;
+    }
+
+    .painel-enigma {
+        width: 100%;
+        background-color: #111118;
+        color: #00ff00;
+        padding: 12px;
+        border-radius: 8px;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        border: 1px solid #33334d;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .painel-enigma h3 {
+        color: #fff;
+        margin: 0 0 10px 0;
+        border-bottom: 1px solid #33334d;
+        padding-bottom: 5px;
+        font-size: 13px;
+        text-align: center;
+        width: 100%;
+    }
+
+    /* Mini-matriz do Enigma Secreto 9x9 */
+    .enigma-grid-visual {
+        display: grid;
+        grid-template-columns: repeat(9, 14px);
+        grid-template-rows: repeat(9, 14px);
+        gap: 2px;
+        background-color: #222233;
+        padding: 4px;
+        border-radius: 6px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .enigma-quadrado {
+        width: 14px;
+        height: 14px;
+        border-radius: 2px;
+    }
+
+    /* Legenda RGB com 5 opções (3 reais + 2 falsas) */
+    .legenda-rgb-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        border-top: 1px dashed #33334d;
+        padding-top: 10px;
+    }
+    .legenda-titulo {
+        font-size: 10px;
+        color: #8888aa;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 2px;
+    }
+    .legenda-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #181826;
+        padding: 6px 8px;
+        border-radius: 5px;
+        border: 1px solid #292942;
+        cursor: pointer;
+        transition: background-color 0.15s, transform 0.1s, border-color 0.15s;
+    }
+    .legenda-item:hover {
+        background-color: #24243a;
+        border-color: #00ff88;
+        transform: translateX(2px);
+    }
+    .legenda-amostra {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+        border: 1px solid rgba(255,255,255,0.3);
+        flex-shrink: 0;
+    }
+    .legenda-texto {
+        font-size: 11px;
+        font-family: monospace;
+        color: #ddddff;
+        font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+        body { justify-content: flex-start; }
+        .container-principal {
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 16px;
+        }
+        .painel-lateral { width: 100%; }
+        .tabuleiro {
+            grid-template-columns: repeat(9, 30px);
+            grid-template-rows: repeat(9, 30px);
+            gap: 3px;
+        }
+        .casa {
+            width: 30px;
+            height: 30px;
+        }
+    }
+</style>
+</head>
+<body>
+
+<div class="container-principal">
+    <!-- Lado Esquerdo / Topo: Zona Principal do Jogo -->
+    <div class="zona-jogo">
+        <!-- Tabuleiro 9x9 -->
+        <div class="tabuleiro" id="tabuleiro"></div>
+
+        <!-- Formulário de Entrada RGB -->
+        <div class="painel-form-rgb">
+            <div class="form-rgb-titulo">
+                <span>🎨 Definir Cor da Célula (RGB)</span>
+                <span class="status-selecao" id="statusSelecao">Nenhuma célula selecionada</span>
+            </div>
+            
+            <div class="form-rgb-inputs">
+                <div class="input-group">
+                    <label class="label-r" for="inputR">R:</label>
+                    <input type="number" id="inputR" class="input-rgb" min="0" max="255" value="255" oninput="atualizarPreviewForm()">
+                </div>
+                <div class="input-group">
+                    <label class="label-g" for="inputG">G:</label>
+                    <input type="number" id="inputG" class="input-rgb" min="0" max="255" value="255" oninput="atualizarPreviewForm()">
+                </div>
+                <div class="input-group">
+                    <label class="label-b" for="inputB">B:</label>
+                    <input type="number" id="inputB" class="input-rgb" min="0" max="255" value="255" oninput="atualizarPreviewForm()">
+                </div>
+
+                <div class="cor-preview" id="previewCor" title="Amostra da Cor"></div>
+
+                <button class="btn-aplicar-cor" onclick="aplicarCorSelecionada()">OK (Aplicar)</button>
+            </div>
+        </div>
+
+        <div class="controles">
+            <button class="btn-acao btn-reiniciar" onclick="novoJogo()">Novo Jogo</button>
+            <button class="btn-acao btn-comparar" id="btnValidar" onclick="compararMatrizes()">Validar Resposta</button>
+            <button class="btn-acao btn-revelar" id="btnRevelar" onclick="revelarSegredo()">Revelar Enigma</button>
+            <button class="btn-acao btn-back" onclick="window.history.back()">Exit</button>
+        </div>
+        <div class="resultado-mensagem" id="mensagemFeedback"></div>
+    </div>
+
+    <!-- Lado Direito / Baixo: Painel Lateral (Enigma) -->
+    <div class="painel-lateral">
+        <div class="painel-enigma">
+            <h3>Enigma Secreto</h3>
+            
+            <!-- Mini-matriz do Enigma 9x9 -->
+            <div class="enigma-grid-visual" id="conteudoEnigma"></div>
+            
+            <!-- Legenda com 5 Cores (3 Reais + 2 Falsas) -->
+            <div class="legenda-rgb-container" id="legendaRGB">
+                <div class="legenda-titulo">Legenda do Enigma</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const tabuleiro = document.getElementById('tabuleiro');
+    const mensagemFeedback = document.getElementById('mensagemFeedback');
+    const btnValidar = document.getElementById('btnValidar');
+    const btnRevelar = document.getElementById('btnRevelar');
+    const statusSelecao = document.getElementById('statusSelecao');
+    const previewCor = document.getElementById('previewCor');
+
+    const inputR = document.getElementById('inputR');
+    const inputG = document.getElementById('inputG');
+    const inputB = document.getElementById('inputB');
+
+    const TAMANHO = 9; // Configurado para 9x9 (81 casas)
+    const TOTAL_CASAS = TAMANHO * TAMANHO; 
+
+    let matrizUsuario = []; 
+    let matrizSecreta = []; 
+    let celulaSelecionada = null; 
+
+    function novoJogo() {
+        desselecionarCelula();
+        mensagemFeedback.textContent = '';
+        btnValidar.disabled = false;
+        btnRevelar.disabled = false;
+
+        gerarMatrizSecretaERGB();
+        inicializarTabuleiro();
+        atualizarPreviewForm();
+    }
+
+    function gerarCorRGB() {
+        return {
+            r: Math.floor(Math.random() * 256),
+            g: Math.floor(Math.random() * 256),
+            b: Math.floor(Math.random() * 256)
+        };
+    }
+
+    function saoCoresIguais(c1, c2) {
+        return c1.r === c2.r && c1.g === c2.g && c1.b === c2.b;
+    }
+
+    function gerarMatrizSecretaERGB() {
+        const coresReais = [];
+        while (coresReais.length < 3) {
+            const novaCor = gerarCorRGB();
+            if (!coresReais.some(c => saoCoresIguais(c, novaCor))) {
+                coresReais.push(novaCor);
+            }
+        }
+
+        matrizSecreta = [];
+        const containerVisual = document.getElementById('conteudoEnigma');
+        containerVisual.innerHTML = '';
+
+        for (let l = 0; l < TAMANHO; l++) {
+            let linha = [];
+            for (let c = 0; c < TAMANHO; c++) {
+                const corSorteada = coresReais[Math.floor(Math.random() * coresReais.length)];
+                linha.push({ ...corSorteada });
+
+                const miniQuadrado = document.createElement('div');
+                miniQuadrado.className = 'enigma-quadrado';
+                miniQuadrado.style.backgroundColor = `rgb(${corSorteada.r}, ${corSorteada.g}, ${corSorteada.b})`;
+                containerVisual.appendChild(miniQuadrado);
+            }
+            matrizSecreta.push(linha);
+        }
+
+        const coresFalsas = [];
+        while (coresFalsas.length < 2) {
+            const corIsca = gerarCorRGB();
+            const jaExisteReal = coresReais.some(c => saoCoresIguais(c, corIsca));
+            const jaExisteFalsa = coresFalsas.some(c => saoCoresIguais(c, corIsca));
+            if (!jaExisteReal && !jaExisteFalsa) {
+                coresFalsas.push(corIsca);
+            }
+        }
+
+        const legenda5Cores = [...coresReais, ...coresFalsas];
+        embaralharArray(legenda5Cores);
+
+        const containerLegenda = document.getElementById('legendaRGB');
+        containerLegenda.innerHTML = '<div class="legenda-titulo">Legenda do Enigma</div>';
+
+        legenda5Cores.forEach((cor) => {
+            const item = document.createElement('div');
+            item.className = 'legenda-item';
+            item.title = "Clique para carregar esta cor no formulário";
+            item.onclick = () => preencherFormularioRGB(cor.r, cor.g, cor.b);
+
+            item.innerHTML = `
+                <div class="legenda-amostra" style="background-color: rgb(${cor.r}, ${cor.g}, ${cor.b});"></div>
+                <div class="legenda-texto">RGB(${cor.r}, ${cor.g}, ${cor.b})</div>
+            `;
+            containerLegenda.appendChild(item);
+        });
+    }
+
+    function embaralharArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+    }
+
+    function inicializarTabuleiro() {
+        tabuleiro.innerHTML = ''; 
+        matrizUsuario = []; 
+
+        for (let linha = 0; linha < TAMANHO; linha++) {
+            let linhaMatriz = [];
+            for (let coluna = 0; coluna < TAMANHO; coluna++) {
+                linhaMatriz.push({ r: 180, g: 180, b: 180 }); 
+                
+                const casa = document.createElement('div');
+                casa.classList.add('casa');
+                casa.style.backgroundColor = 'rgb(180, 180, 180)';
+                casa.dataset.linha = linha;
+                casa.dataset.coluna = coluna;
+                
+                casa.addEventListener('click', function() {
+                    selecionarCelula(this, linha, coluna);
+                });
+                
+                tabuleiro.appendChild(casa);
+            }
+            matrizUsuario.push(linhaMatriz);
+        }
+    }
+
+    function selecionarCelula(elemento, linha, coluna) {
+        if (celulaSelecionada && celulaSelecionada.elemento) {
+            celulaSelecionada.elemento.classList.remove('selecionada');
+        }
+
+        elemento.classList.add('selecionada');
+        celulaSelecionada = { linha, coluna, elemento };
+
+        statusSelecao.textContent = `Célula selecionada: (${linha + 1}, ${coluna + 1})`;
+        statusSelecao.style.color = "#00ff88";
+
+        const corAtual = matrizUsuario[linha][coluna];
+        inputR.value = corAtual.r;
+        inputG.value = corAtual.g;
+        inputB.value = corAtual.b;
+        atualizarPreviewForm();
+    }
+
+    function desselecionarCelula() {
+        if (celulaSelecionada && celulaSelecionada.elemento) {
+            celulaSelecionada.elemento.classList.remove('selecionada');
+        }
+        celulaSelecionada = null;
+        statusSelecao.textContent = "Nenhuma célula selecionada";
+        statusSelecao.style.color = "#aaaabb";
+    }
+
+    function atualizarPreviewForm() {
+        let r = Math.min(255, Math.max(0, parseInt(inputR.value) || 0));
+        let g = Math.min(255, Math.max(0, parseInt(inputG.value) || 0));
+        let b = Math.min(255, Math.max(0, parseInt(inputB.value) || 0));
+
+        previewCor.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+    }
+
+    function preencherFormularioRGB(r, g, b) {
+        inputR.value = r;
+        inputG.value = g;
+        inputB.value = b;
+        atualizarPreviewForm();
+
+        if (celulaSelecionada) {
+            aplicarCorSelecionada();
+        } else {
+            mensagemFeedback.style.color = "#00ff88";
+            mensagemFeedback.textContent = `Cor RGB(${r}, ${g}, ${b}) selecionada! Clique em uma célula para aplicá-la.`;
+        }
+    }
+
+    function aplicarCorSelecionada() {
+        if (!celulaSelecionada) {
+            mensagemFeedback.style.color = "#ffcc00";
+            mensagemFeedback.textContent = "⚠️ Clique em uma célula do tabuleiro antes de aplicar a cor!";
+            return;
+        }
+
+        let r = Math.min(255, Math.max(0, parseInt(inputR.value) || 0));
+        let g = Math.min(255, Math.max(0, parseInt(inputG.value) || 0));
+        let b = Math.min(255, Math.max(0, parseInt(inputB.value) || 0));
+
+        inputR.value = r;
+        inputG.value = g;
+        inputB.value = b;
+
+        const { linha, coluna, elemento } = celulaSelecionada;
+
+        matrizUsuario[linha][coluna] = { r, g, b };
+        elemento.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+
+        mensagemFeedback.textContent = '';
+    }
+
+    function compararMatrizes() {
+        let acertos = 0;
+        const casasVisuais = tabuleiro.children;
+        let index = 0;
+
+        for (let l = 0; l < TAMANHO; l++) {
+            for (let c = 0; c < TAMANHO; c++) {
+                const casa = casasVisuais[index];
+                const u = matrizUsuario[l][c];
+                const s = matrizSecreta[l][c];
+
+                if (u.r === s.r && u.g === s.g && u.b === s.b) {
+                    acertos++;
+                } else {
+                    casa.style.backgroundColor = '#dc3545';
+                }
+                index++;
+            }
+        }
+
+        const porcentagem = ((acertos / TOTAL_CASAS) * 100).toFixed(1);
+
+        if (acertos === TOTAL_CASAS) {
+            mensagemFeedback.style.color = "#00ff88";
+            mensagemFeedback.textContent = "🏆 Perfeito! Você acertou todas as cores do enigma!";
+            btnValidar.disabled = true;
+        } else {
+            mensagemFeedback.style.color = "#b8860b";
+            mensagemFeedback.textContent = `Resultado: ${porcentagem}% de acertos (${acertos}/${TOTAL_CASAS} casas corretas). As incorretas estão marcadas em vermelho!`;
+        }
+    }
+
+    function revelarSegredo() {
+        desselecionarCelula();
+        const casasVisuais = tabuleiro.children;
+        let index = 0;
+
+        for (let l = 0; l < TAMANHO; l++) {
+            for (let c = 0; c < TAMANHO; c++) {
+                const casa = casasVisuais[index];
+                const s = matrizSecreta[l][c];
+
+                casa.style.backgroundColor = `rgb(${s.r}, ${s.g}, ${s.b})`;
+                matrizUsuario[l][c] = { r: s.r, g: s.g, b: s.b };
+
+                index++;
+            }
+        }
+
+        mensagemFeedback.style.color = "#ff9500";
+        mensagemFeedback.textContent = "O Enigma RGB foi revelado!";
+        btnValidar.disabled = true;
+    }
+
+    window.onload = function() {
+        novoJogo();
+    };
+</script>
+</body>
+</html>
